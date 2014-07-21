@@ -13,7 +13,7 @@ type Feed struct {
 
 func TestModel(t *testing.T) {
 	f := new(Feed)
-	SetModel(f, "sql")
+	Set(f, "sql")
 
 	cols := []string{"id", "source_type"}
 

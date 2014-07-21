@@ -43,7 +43,7 @@ type Model struct {
 	Values  []interface{}
 }
 
-func SetModel(m interface{}, tag string) {
+func Set(m interface{}, tag string) {
 	v := reflect.ValueOf(m)
 
 	if v.Type().Kind() != reflect.Ptr || v.Type().Elem().Kind() != reflect.Struct {

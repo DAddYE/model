@@ -1,10 +1,12 @@
-## Model.go
+# Model.go
 
 This is a naive, very small (~50 LOC) way to map `something` to a `struct`.
 
 It works well for example with the standard package `database/sql`
 
-### Usage:
+It use `reflections`, but only **once**, in particular when you use `Set(T)`.
+
+## Usage:
 
 Define a type, `tag` it and embed the `Model` type.
 
@@ -43,7 +45,7 @@ for rows.Next() {
 }
 ```
 
-### LICENSE
+## LICENSE
 
 Copyright (C) 2014 Davide D'Agostino
 
