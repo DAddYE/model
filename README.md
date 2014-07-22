@@ -77,7 +77,7 @@ may want to fetch `one` or `multi` row(s), you can now define your functions as:
 
 ```go
 func (f *Feed) First(conditions string, args ...interface{}) error {
-  m := &f.Model
+	m := &f.Model
 	query := model.Query{"SELECT", m.Columns, "FROM", m.Table, conditions, "LIMIT 1"}
 
 	m.Err = m.DB.QueryRow(query.String(), args...).Scan(m.Values...)
@@ -85,7 +85,7 @@ func (f *Feed) First(conditions string, args ...interface{}) error {
 }
 
 func (f *Feed) Find(conditions string, args ...interface{}) (*model.Iter, error) {
-  m := &f.Model
+	m := &f.Model
 	query := model.Query{"SELECT", m.Columns, "FROM", m.Table, conditions}
 
 	rows, err := m.DB.Query(query.String(), args...)
