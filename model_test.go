@@ -5,15 +5,15 @@ import (
 	"testing"
 )
 
-type Feed struct {
-	Id         int    `sql:"id"`
-	SourceType string `sql:"source_type"`
+type modelTest struct {
+	Id         int    `custom:"id"`
+	SourceType string `custom:"source_type"`
 	Model
 }
 
 func TestModel(t *testing.T) {
-	f := new(Feed)
-	Set(f, "sql")
+	f := new(modelTest)
+	Set(f, "custom")
 
 	cols := []string{"id", "source_type"}
 

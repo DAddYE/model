@@ -1,46 +1,44 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
-/*
-  Usage:
+type Columns []string
+type Values []interface{}
+type Query []interface{}
 
-  Define a type, tag it and embed the Model type.
-
-	type Feed struct {
-		Id         int    `sql:"id"`
-		SourceType string `sql:"source_type"`
-		Model
-	}
-
-  Finally setup your new model:
-
-	f := new(Feed)
-	SetModel(f, "sql")
-
-  Now you can use it like:
-
-	db, err := sql.Open("postgres", "...")
-	rows, err := db.Query("SELECT " + strings.Join(f.Columns, ", ") + " FROM feeds LIMIT 10")
-	if err != nil {
-		panic(err)
-	}
-
-	for rows.Next() {
-		err := rows.Scan(f.Values...)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Printf("%#+v\n", f.SourceType)
-	}
-*/
 type Model struct {
-	Err     error
-	Columns []string
-	Values  []interface{}
+	Columns
+	Values
+	Table string
+	Err   error
+	DB    *sql.DB
+}
+
+func (c Columns) String() string {
+	return strings.Join(c, ", ")
+}
+
+func (q Query) String() string {
+	res := make([]string, len(q))
+	for i, v := range q {
+		switch x := v.(type) {
+		case string:
+			res[i] = x
+		case int:
+			res[i] = strconv.Itoa(x)
+		case Columns:
+			res[i] = x.String()
+		default:
+			panic(fmt.Errorf("the type %T is invalid", x))
+		}
+	}
+	return strings.Join(res, " ")
 }
 
 func Set(m interface{}, tag string) {
@@ -56,16 +54,42 @@ func Set(m interface{}, tag string) {
 		panic(fmt.Errorf("the struct %s doesn't embed the type Model", v.Type()))
 	}
 
-	columns := st.FieldByName("Columns").Addr().Interface().(*[]string)
-	values := st.FieldByName("Values").Addr().Interface().(*[]interface{})
+	columns := st.FieldByName("Columns").Addr().Interface().(*Columns)
+	values := st.FieldByName("Values").Addr().Interface().(*Values)
 
+	parseFields(st, tag, columns, values)
+}
+
+func parseFields(st reflect.Value, tag string, columns *Columns, values *Values) {
 	for i := 0; i < st.NumField(); i++ {
+		// check if we are in a embedded struct
+		if st.Type().Field(i).Type.Kind() == reflect.Struct {
+			parseFields(st.Field(i), tag, columns, values)
+		}
+
+		// check if is tagged
 		name := st.Type().Field(i).Tag.Get(tag)
 		if name == "" {
 			continue
 		}
+
+		// derive the interface
 		inter := st.Field(i).Addr().Interface()
+
+		// change the original input
 		*columns = append(*columns, name)
 		*values = append(*values, inter)
 	}
+}
+
+type Iter struct {
+	Rows  *sql.Rows
+	Model *Model
+}
+
+func (i *Iter) Next() (res bool) {
+	if res = i.Rows.Next(); res {
+		i.Model.Err = i.Rows.Scan(i.Model.Values...)
+	}
+	return
 }
