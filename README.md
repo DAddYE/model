@@ -99,13 +99,15 @@ func (f *Feed) Find(conditions string, args ...interface{}) (*model.Iter, error)
 }
 ```
 
-__SIDE NOTE: What is `Query`? Nothing complicated, just a little helper to `Join(something, ", ")`,
-check it out on [model.go](/model.go)__
+_SIDE NOTE: What is `Query`? Nothing complicated, just a little helper to `Join(something, ", ")`,
+check it out on [model.go](/model.go)_
 
 Since it's a quite common pattern we provide (and you can do it too) `generics` functions. So for
-`database/sql` you can `import query "github.com/daddye/model/sql"` and write just that:
+`database/sql` you can import [query](/model/sql) and write just that:
 
 ```go
+import query "github.com/daddye/model/sql"
+
 func (f *Feed) First(conditions string, args ...interface{}) error {
 	return query.First(&f.Model, conditions, args...)
 }
