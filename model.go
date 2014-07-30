@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -80,16 +79,4 @@ func parseFields(st reflect.Value, tag string, columns *Columns, values *Values)
 		*columns = append(*columns, name)
 		*values = append(*values, inter)
 	}
-}
-
-type Iter struct {
-	Rows  *sql.Rows
-	Model *Model
-}
-
-func (i *Iter) Next() (res bool) {
-	if res = i.Rows.Next(); res {
-		i.Model.Err = i.Rows.Scan(i.Model.Values...)
-	}
-	return
 }
