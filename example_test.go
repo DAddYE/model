@@ -33,7 +33,7 @@ type Ftp struct {
 
 func NewFeed(db *sql.DB) (f *Feed) {
 	f = new(Feed)
-	f.DB = db
+	f.Interface = db
 	f.Table = "feeds"
 	model.Set(f, "sql")
 	return

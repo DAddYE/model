@@ -56,7 +56,7 @@ to the sql counterpart:
 ```go
 func NewFeed(db *sql.DB) (f *Feed) {
 	f = new(Feed)
-	f.DB = db
+	f.Interface = db
 	f.Table = "feeds"
 	model.Set(f, "sql")
 	return
@@ -80,7 +80,7 @@ func (f *Feed) First(conditions string, args ...interface{}) error {
 	m := &f.Model
 	query := model.Query{"SELECT", m.Columns, "FROM", m.Table, conditions, "LIMIT 1"}
 
-	m.Err = m.DB.QueryRow(query.String(), args...).Scan(m.Values...)
+	m.Err = m.Interface.(*sql.DB).QueryRow(query.String(), args...).Scan(m.Values...)
 	return m.Err
 }
 
@@ -88,7 +88,7 @@ func (f *Feed) Find(conditions string, args ...interface{}) (*model.Iter, error)
 	m := &f.Model
 	query := model.Query{"SELECT", m.Columns, "FROM", m.Table, conditions}
 
-	rows, err := m.DB.Query(query.String(), args...)
+	rows, err := m.Interface.(*sql.DB).Query(query.String(), args...)
 	if err != nil {
 		m.Err = err
 		return nil, err

@@ -15,9 +15,9 @@ type Query []interface{}
 type Model struct {
 	Columns
 	Values
-	Table string
-	Err   error
-	DB    *sql.DB
+	Table     string
+	Err       error
+	Interface interface{} // a DB, gcql.Session... etc...
 }
 
 func (c Columns) String() string {
