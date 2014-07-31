@@ -33,6 +33,8 @@ func (q Query) String() string {
 			res[i] = strconv.Itoa(x)
 		case Columns:
 			res[i] = x.String()
+		case []string:
+			res[i] = strings.Join(x, ", ")
 		default:
 			panic(fmt.Errorf("the type %T is invalid", x))
 		}
