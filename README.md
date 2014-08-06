@@ -51,7 +51,6 @@ m := model.New(user, "sql")
 now you can check, tag names:
 
 ```go
-m := model.New(user, "sql")
 m.TagNames() // => [id name last_name]
 ```
 
