@@ -14,7 +14,7 @@ import "github.com/daddye/model"
 
 ## Usage:
 
-1. Define your model type (Usually the name of a Table)
+1. Define your `struct`
 2. `tag` it. Each tag will map the field to the column name
 
 ```go
