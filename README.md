@@ -88,7 +88,8 @@ db.QueryRow("SELECT * FROM users WHERE id = $1", 9).Scan(m.Interfaces()...)
 
 since query string construction is a common pattern, I have added a type `Query` to deal with it.
 
-So you can rewrite the latter better with:
+So you can rewrite the latter better using our type
+[Query](https://godoc.org/github.com/DAddYE/model#Query):
 
 ```go
 table := "users"
