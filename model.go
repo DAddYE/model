@@ -8,12 +8,15 @@ import (
 	"strings"
 )
 
+// Model is an utility type to access and manipulate struct informations.
 type Model struct {
 	Fields    []*Field // field fields (pointers to fields)
 	reference interface{}
 	tag       string
 }
 
+// Field represent the field of a struct, is an extension of `reflect.StructField` and adds
+// few convenient methods.
 type Field struct {
 	TagName    string
 	Reflection reflect.Value
@@ -21,6 +24,8 @@ type Field struct {
 	reflect.StructField
 }
 
+// Query is a tiny helper to help you to build query strings.
+// It will take care to join array of strings with ", " or convert `int`.
 type Query []interface{}
 
 func (q Query) String() string {
@@ -54,6 +59,7 @@ func structType(s interface{}) reflect.Value {
 	return v
 }
 
+// Allocates a new Model and will extract and cache informations of fields that have the given `tag`
 func New(s interface{}, tag string) *Model {
 	v := reflect.ValueOf(s)
 
@@ -113,6 +119,7 @@ func fields(sv reflect.Value) ([]reflect.Value, []reflect.StructField) {
 	return v, t
 }
 
+// Returns the real values of the tagged fields. This cannot be cached.
 func Values(s interface{}, tag string) []interface{} {
 	sv, st := fields(structType(s))
 	values := make([]interface{}, 0, len(sv))
@@ -129,6 +136,8 @@ func Values(s interface{}, tag string) []interface{} {
 	return values
 }
 
+// Returns a map of field (tag) names and their value
+//	Example: m.Map()["last_name"]
 func (m *Model) Map() map[string]interface{} {
 	values := Values(m.reference, m.tag)
 	ret := make(map[string]interface{}, len(values))
@@ -138,10 +147,12 @@ func (m *Model) Map() map[string]interface{} {
 	return ret
 }
 
+// Returns an array of values of tagged fields
 func (m *Model) Values() []interface{} {
 	return Values(m.reference, m.tag)
 }
 
+// Returns the "real" name of all struct's fields
 func (m *Model) Names() []string {
 	ret := make([]string, 0, len(m.Fields))
 	for _, field := range m.Fields {
@@ -150,6 +161,7 @@ func (m *Model) Names() []string {
 	return ret
 }
 
+// Returns the tagged names of all struct's fields
 func (m *Model) TagNames() []string {
 	ret := make([]string, 0, len(m.Fields))
 	for _, field := range m.Fields {
@@ -158,6 +170,8 @@ func (m *Model) TagNames() []string {
 	return ret
 }
 
+// Returns the underlining interface of each struct's field.
+// Useful when binding results to our struct.
 func (m *Model) Interfaces() []interface{} {
 	ret := make([]interface{}, 0, len(m.Fields))
 	for _, field := range m.Fields {
@@ -166,6 +180,7 @@ func (m *Model) Interfaces() []interface{} {
 	return ret
 }
 
+// Returns an array of `reflect.Value`, pay attention that are the cached one.
 func (m *Model) Reflections() []reflect.Value {
 	ret := make([]reflect.Value, 0, len(m.Fields))
 	for _, field := range m.Fields {
@@ -174,7 +189,7 @@ func (m *Model) Reflections() []reflect.Value {
 	return ret
 }
 
-// alpha
+// Alpha: decode back a `map[string]interface` to our struct.
 func (m *Model) Decode(raw map[string]interface{}) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
