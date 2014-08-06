@@ -3,25 +3,25 @@ package model
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 )
 
-type Columns []string
-type Values []interface{}
-type Query []interface{}
-
 type Model struct {
-	Columns
-	Values
-	Table     string
-	Err       error
-	Interface interface{} // a DB, gcql.Session... etc...
+	Fields    []*Field // field fields (pointers to fields)
+	reference interface{}
+	tag       string
 }
 
-func (c Columns) String() string {
-	return strings.Join(c, ", ")
+type Field struct {
+	TagName    string
+	Reflection reflect.Value
+	Interface  interface{}
+	reflect.StructField
 }
+
+type Query []interface{}
 
 func (q Query) String() string {
 	res := make([]string, len(q))
@@ -31,8 +31,6 @@ func (q Query) String() string {
 			res[i] = x
 		case int:
 			res[i] = strconv.Itoa(x)
-		case Columns:
-			res[i] = x.String()
 		case []string:
 			res[i] = strings.Join(x, ", ")
 		default:
@@ -42,43 +40,156 @@ func (q Query) String() string {
 	return strings.Join(res, " ")
 }
 
-func Set(m interface{}, tag string) {
-	v := reflect.ValueOf(m)
+func structType(s interface{}) reflect.Value {
+	v := reflect.ValueOf(s)
+
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		panic(fmt.Errorf("the be a struct or a pointer to a struct; got %T", v.Type()))
+	}
+
+	return v
+}
+
+func New(s interface{}, tag string) *Model {
+	v := reflect.ValueOf(s)
 
 	if v.Type().Kind() != reflect.Ptr || v.Type().Elem().Kind() != reflect.Struct {
 		panic(fmt.Errorf("the model must be pointer to a struct; got %T", v.Type()))
 	}
 
-	st := v.Elem()
+	m := new(Model)
+	m.reference = s
+	m.tag = tag
 
-	if !st.FieldByName("Model").IsValid() {
-		panic(fmt.Errorf("the struct %s doesn't embed the type Model", v.Type()))
-	}
+	sv, st := fields(structType(s))
 
-	columns := st.FieldByName("Columns").Addr().Interface().(*Columns)
-	values := st.FieldByName("Values").Addr().Interface().(*Values)
+	m.Fields = make([]*Field, 0, len(sv))
 
-	parseFields(st, tag, columns, values)
-}
-
-func parseFields(st reflect.Value, tag string, columns *Columns, values *Values) {
-	for i := 0; i < st.NumField(); i++ {
-		// check if we are in a embedded struct
-		if st.Type().Field(i).Type.Kind() == reflect.Struct {
-			parseFields(st.Field(i), tag, columns, values)
-		}
-
+	for i := 0; i < len(sv); i++ {
 		// check if is tagged
-		name := st.Type().Field(i).Tag.Get(tag)
+		name := st[i].Tag.Get(tag)
 		if name == "" {
 			continue
 		}
 
-		// derive the interface
-		inter := st.Field(i).Addr().Interface()
+		field := &Field{
+			TagName:     st[i].Tag.Get(tag),
+			StructField: st[i],
+			Reflection:  sv[i],
+			Interface:   sv[i].Addr().Interface(),
+		}
 
-		// change the original input
-		*columns = append(*columns, name)
-		*values = append(*values, inter)
+		m.Fields = append(m.Fields, field)
 	}
+
+	return m
+}
+
+func fields(sv reflect.Value) ([]reflect.Value, []reflect.StructField) {
+	v := make([]reflect.Value, 0)
+	t := make([]reflect.StructField, 0)
+	st := sv.Type()
+
+	for i := 0; i < st.NumField(); i++ {
+		// check if we are in a embedded struct
+		if st.Field(i).Type.Kind() == reflect.Struct {
+			vn, tn := fields(sv.Field(i))
+			v = append(v, vn...)
+			t = append(t, tn...)
+			continue
+		}
+		v = append(v, sv.Field(i))
+		t = append(t, st.Field(i))
+	}
+
+	if len(v) != len(t) {
+		panic("internal error")
+	}
+
+	return v, t
+}
+
+func Values(s interface{}, tag string) []interface{} {
+	sv, st := fields(structType(s))
+	values := make([]interface{}, 0, len(sv))
+	for i, value := range sv {
+		if st[i].Tag.Get(tag) == "" {
+			continue
+		}
+		if value.Type().Kind() == reflect.Struct {
+			values = append(values, Values(value.Interface(), tag)...)
+			continue
+		}
+		values = append(values, value.Interface())
+	}
+	return values
+}
+
+func (m *Model) Map() map[string]interface{} {
+	values := Values(m.reference, m.tag)
+	ret := make(map[string]interface{}, len(values))
+	for i, value := range values {
+		ret[m.TagNames()[i]] = value
+	}
+	return ret
+}
+
+func (m *Model) Values() []interface{} {
+	return Values(m.reference, m.tag)
+}
+
+func (m *Model) Names() []string {
+	ret := make([]string, 0, len(m.Fields))
+	for _, field := range m.Fields {
+		ret = append(ret, field.Name)
+	}
+	return ret
+}
+
+func (m *Model) TagNames() []string {
+	ret := make([]string, 0, len(m.Fields))
+	for _, field := range m.Fields {
+		ret = append(ret, field.TagName)
+	}
+	return ret
+}
+
+func (m *Model) Interfaces() []interface{} {
+	ret := make([]interface{}, 0, len(m.Fields))
+	for _, field := range m.Fields {
+		ret = append(ret, field.Interface)
+	}
+	return ret
+}
+
+func (m *Model) Reflections() []reflect.Value {
+	ret := make([]reflect.Value, 0, len(m.Fields))
+	for _, field := range m.Fields {
+		ret = append(ret, field.Reflection)
+	}
+	return ret
+}
+
+// alpha
+func (m *Model) Decode(raw map[string]interface{}) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			err = r.(error)
+		}
+	}()
+	for k, v := range raw {
+		for _, field := range m.Fields {
+			if field.TagName == k {
+				field.Reflection.Set(reflect.ValueOf(v))
+			}
+		}
+	}
+	return
 }
