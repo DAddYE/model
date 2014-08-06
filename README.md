@@ -4,7 +4,7 @@
 
 General purpose utilities for the go `struct`.
 
-It uses `reflect`, however we cache it when you allocate the `model`.
+It uses `reflect`, however we cache the result when you allocate the `model`.
 
 ## Install
 
