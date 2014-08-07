@@ -71,17 +71,11 @@ func New(s interface{}, tag string) *Model {
 	m.reference = s
 	m.tag = tag
 
-	sv, st := fields(structType(s))
+	sv, st := fields(structType(s), tag)
 
 	m.Fields = make([]*Field, 0, len(sv))
 
 	for i := 0; i < len(sv); i++ {
-		// check if is tagged
-		name := st[i].Tag.Get(tag)
-		if name == "" {
-			continue
-		}
-
 		field := &Field{
 			TagName:     st[i].Tag.Get(tag),
 			StructField: st[i],
@@ -95,21 +89,23 @@ func New(s interface{}, tag string) *Model {
 	return m
 }
 
-func fields(sv reflect.Value) ([]reflect.Value, []reflect.StructField) {
+func fields(sv reflect.Value, tag string) ([]reflect.Value, []reflect.StructField) {
 	v := make([]reflect.Value, 0)
 	t := make([]reflect.StructField, 0)
 	st := sv.Type()
 
 	for i := 0; i < st.NumField(); i++ {
-		// check if we are in a embedded struct
-		if st.Field(i).Type.Kind() == reflect.Struct {
-			vn, tn := fields(sv.Field(i))
+		// walk inside an embedded struct if it has no tag.
+		if st.Field(i).Type.Kind() == reflect.Struct && st.Field(i).Tag.Get(tag) == "" {
+			vn, tn := fields(sv.Field(i), tag)
 			v = append(v, vn...)
 			t = append(t, tn...)
 			continue
 		}
-		v = append(v, sv.Field(i))
-		t = append(t, st.Field(i))
+		if st.Field(i).Tag.Get(tag) != "" {
+			v = append(v, sv.Field(i))
+			t = append(t, st.Field(i))
+		}
 	}
 
 	if len(v) != len(t) {
@@ -121,13 +117,10 @@ func fields(sv reflect.Value) ([]reflect.Value, []reflect.StructField) {
 
 // Returns the real values of the tagged fields. This cannot be cached.
 func Values(s interface{}, tag string) []interface{} {
-	sv, st := fields(structType(s))
+	sv, st := fields(structType(s), tag)
 	values := make([]interface{}, 0, len(sv))
 	for i, value := range sv {
-		if st[i].Tag.Get(tag) == "" {
-			continue
-		}
-		if value.Type().Kind() == reflect.Struct {
+		if value.Type().Kind() == reflect.Struct && st[i].Tag.Get(tag) == "" {
 			values = append(values, Values(value.Interface(), tag)...)
 			continue
 		}

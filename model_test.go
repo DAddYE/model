@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"reflect"
 	"testing"
 
@@ -55,4 +56,17 @@ func TestDecode(t *testing.T) {
 	assert.Equal(t, "Smith", f.Bio.Surname)
 
 	// TODO: nullify, invalid conversion, etc...
+}
+
+func TestSqlNull(t *testing.T) {
+	f := &struct {
+		Name    sql.NullString `sql:"name"`
+		Surname string         `sql:"surname"`
+	}{}
+	f.Name.String = "Stan"
+	f.Surname = "Smith"
+
+	m := New(f, "sql")
+	assert.Len(t, m.Interfaces(), 2)
+	assert.Equal(t, "Stan", m.Map()["name"].(sql.NullString).String)
 }
