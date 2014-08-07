@@ -62,11 +62,18 @@ func TestSqlNull(t *testing.T) {
 	f := &struct {
 		Name    sql.NullString `sql:"name"`
 		Surname string         `sql:"surname"`
+		Noop    bool
+		Login   struct {
+			Email    string `sql:"login"`
+			Password string `sql:"password"`
+		}
 	}{}
 	f.Name.String = "Stan"
 	f.Surname = "Smith"
+	f.Login.Email = "smith@gmail.com"
 
 	m := New(f, "sql")
-	assert.Len(t, m.Interfaces(), 2)
+	assert.Len(t, m.Interfaces(), 4)
 	assert.Equal(t, "Stan", m.Map()["name"].(sql.NullString).String)
+	assert.Equal(t, "smith@gmail.com", m.Map()["login"].(string))
 }
