@@ -147,18 +147,36 @@ func (m *Model) Values() []interface{} {
 
 // Returns the "real" name of all struct's fields
 func (m *Model) Names() []string {
-	ret := make([]string, 0, len(m.Fields))
-	for _, field := range m.Fields {
-		ret = append(ret, field.Name)
+	ret := make([]string, len(m.Fields))
+	for i, field := range m.Fields {
+		ret[i] = field.Name
 	}
 	return ret
 }
 
 // Returns the tagged names of all struct's fields
 func (m *Model) TagNames() []string {
-	ret := make([]string, 0, len(m.Fields))
-	for _, field := range m.Fields {
-		ret = append(ret, field.TagName)
+	ret := make([]string, len(m.Fields))
+	for i, field := range m.Fields {
+		ret[i] = field.TagName
+	}
+	return ret
+}
+
+// Returns the given string as many times as the len of model.Fields
+func (m *Model) Repeat(s string) []string {
+	ret := make([]string, len(m.Fields))
+	for i, _ := range m.Fields {
+		ret[i] = s
+	}
+	return ret
+}
+
+// Returns the given string as many times as the len of model.Fields plus his increment
+func (m *Model) RepeatInc(s string) []string {
+	ret := make([]string, len(m.Fields))
+	for i, _ := range m.Fields {
+		ret[i] = s + strconv.Itoa(i+1)
 	}
 	return ret
 }
@@ -166,18 +184,18 @@ func (m *Model) TagNames() []string {
 // Returns the underlining interface of each struct's field.
 // Useful when binding results to our struct.
 func (m *Model) Interfaces() []interface{} {
-	ret := make([]interface{}, 0, len(m.Fields))
-	for _, field := range m.Fields {
-		ret = append(ret, field.Interface)
+	ret := make([]interface{}, len(m.Fields))
+	for i, field := range m.Fields {
+		ret[i] = field.Interface
 	}
 	return ret
 }
 
 // Returns an array of `reflect.Value`, pay attention that are the cached one.
 func (m *Model) Reflections() []reflect.Value {
-	ret := make([]reflect.Value, 0, len(m.Fields))
-	for _, field := range m.Fields {
-		ret = append(ret, field.Reflection)
+	ret := make([]reflect.Value, len(m.Fields))
+	for i, field := range m.Fields {
+		ret[i] = field.Reflection
 	}
 	return ret
 }
