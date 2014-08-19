@@ -38,6 +38,8 @@ func (q Query) String() string {
 			res[i] = strconv.Itoa(x)
 		case []string:
 			res[i] = strings.Join(x, ", ")
+		case Query:
+			res[i] = x.String()
 		default:
 			panic(fmt.Errorf("the type %T is invalid", x))
 		}
@@ -164,6 +166,10 @@ func (m *Model) TagNames() []string {
 }
 
 // Returns the given string as many times as the len of model.Fields
+// Useful when building insert statements with Query
+// Example:
+//	people.Repeat("?")
+//	["?", "?", "?"] // len is the number of mapped people struct's fields
 func (m *Model) Repeat(s string) []string {
 	ret := make([]string, len(m.Fields))
 	for i, _ := range m.Fields {
@@ -173,10 +179,27 @@ func (m *Model) Repeat(s string) []string {
 }
 
 // Returns the given string as many times as the len of model.Fields plus his increment
+// Useful when building insert statements (like in postgres) with Query struct.
+// Example:
+//	people.Repeat("$")
+//	["$1", "$2", "$3"]
 func (m *Model) RepeatInc(s string) []string {
 	ret := make([]string, len(m.Fields))
 	for i, _ := range m.Fields {
 		ret[i] = s + strconv.Itoa(i+1)
+	}
+	return ret
+}
+
+// Returns an array of assignment strings:
+// Example
+//	["name=?" "surname=?"]
+func (m *Model) Assing() []string {
+	ret := make([]string, len(m.Fields))
+	for i, field := range m.Fields {
+		// I'm not sure for this use case this is more performant:
+		// string(append([]byte(field.TagName), "=?"...))
+		ret[i] = field.TagName + "=?"
 	}
 	return ret
 }

@@ -99,6 +99,22 @@ query := model.Query{"SELECT", m.TagNames(), "FROM", table, "WHERE id=$1"}
 db.QueryRow(query.String(), 9).Scan(m.Interfaces()...)
 ```
 
+You can create your own DB custom queries like:
+
+```go
+func (s *People) InsertQuery() string {
+  return model.Query{
+    "INSERT INTO people (", s.TagNames(), ") VALUES (", s.Repeat("?") ")",
+  }.String()
+}
+
+func (s *People) UpdateQeury(condition string) string {
+  return model.Query{
+    "UPDATE people SET", s.Assign(), "WHERE", condition,
+  }.String()
+}
+```
+
 ## LICENSE
 
 Copyright (C) 2014 Davide D'Agostino
