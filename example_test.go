@@ -43,15 +43,11 @@ func ExampleModel() {
 	surname := m.Map()["last_name"]
 	fmt.Println(surname)
 
-	// we have access to the reflections
-	fmt.Println(m.Reflections())
-
 	// output:
 	// [id name last_name]
 	// [9 Stan Smith]
 	// [9 Francine Smith]
 	// Smith
-	// [<int Value> Francine Smith]
 }
 
 func ExampleQuery() {

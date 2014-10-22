@@ -3,7 +3,6 @@ package model
 import (
 	"fmt"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 )
@@ -18,9 +17,8 @@ type Model struct {
 // Field represent the field of a struct, is an extension of `reflect.StructField` and adds
 // few convenient methods.
 type Field struct {
-	TagName    string
-	Reflection reflect.Value
-	Interface  interface{}
+	TagName   string
+	Interface interface{}
 	reflect.StructField
 }
 
@@ -81,7 +79,6 @@ func New(s interface{}, tag string) *Model {
 		field := &Field{
 			TagName:     st[i].Tag.Get(tag),
 			StructField: st[i],
-			Reflection:  sv[i],
 			Interface:   sv[i].Addr().Interface(),
 		}
 
@@ -212,33 +209,4 @@ func (m *Model) Interfaces() []interface{} {
 		ret[i] = field.Interface
 	}
 	return ret
-}
-
-// Returns an array of `reflect.Value`, pay attention that are the cached one.
-func (m *Model) Reflections() []reflect.Value {
-	ret := make([]reflect.Value, len(m.Fields))
-	for i, field := range m.Fields {
-		ret[i] = field.Reflection
-	}
-	return ret
-}
-
-// Alpha: decode back a `map[string]interface` to our struct.
-func (m *Model) Decode(raw map[string]interface{}) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-		}
-	}()
-	for k, v := range raw {
-		for _, field := range m.Fields {
-			if field.TagName == k {
-				field.Reflection.Set(reflect.ValueOf(v))
-			}
-		}
-	}
-	return
 }
