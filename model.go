@@ -9,9 +9,9 @@ import (
 
 // Model is an utility type to access and manipulate struct informations.
 type Model struct {
-	Fields    []*Field // field fields (pointers to fields)
-	reference interface{}
-	tag       string
+	Fields []Field // field fields (pointers to fields)
+	ref    interface{}
+	tag    string
 }
 
 // Field represent the field of a struct, is an extension of `reflect.StructField` and adds
@@ -60,29 +60,28 @@ func structType(s interface{}) reflect.Value {
 }
 
 // Allocates a new Model and will extract and cache informations of fields that have the given `tag`
-func New(s interface{}, tag string) *Model {
+func New(s interface{}, tag string) Model {
 	v := reflect.ValueOf(s)
 
 	if v.Type().Kind() != reflect.Ptr || v.Type().Elem().Kind() != reflect.Struct {
 		panic(fmt.Errorf("the model must be pointer to a struct; got %T", v.Type()))
 	}
 
-	m := new(Model)
-	m.reference = s
-	m.tag = tag
+	m := Model{
+		ref: s,
+		tag: tag,
+	}
 
 	sv, st := fields(structType(s), tag)
 
-	m.Fields = make([]*Field, 0, len(sv))
+	m.Fields = make([]Field, len(sv))
 
 	for i := 0; i < len(sv); i++ {
-		field := &Field{
+		m.Fields[i] = Field{
 			TagName:     st[i].Tag.Get(tag),
 			StructField: st[i],
 			Interface:   sv[i].Addr().Interface(),
 		}
-
-		m.Fields = append(m.Fields, field)
 	}
 
 	return m
@@ -130,8 +129,8 @@ func Values(s interface{}, tag string) []interface{} {
 
 // Returns a map of field (tag) names and their value
 //	Example: m.Map()["last_name"]
-func (m *Model) Map() map[string]interface{} {
-	values := Values(m.reference, m.tag)
+func (m Model) Map() map[string]interface{} {
+	values := Values(m.ref, m.tag)
 	ret := make(map[string]interface{}, len(values))
 	for i, value := range values {
 		ret[m.TagNames()[i]] = value
@@ -140,12 +139,12 @@ func (m *Model) Map() map[string]interface{} {
 }
 
 // Returns an array of values of tagged fields
-func (m *Model) Values() []interface{} {
-	return Values(m.reference, m.tag)
+func (m Model) Values() []interface{} {
+	return Values(m.ref, m.tag)
 }
 
 // Returns the "real" name of all struct's fields
-func (m *Model) Names() []string {
+func (m Model) Names() []string {
 	ret := make([]string, len(m.Fields))
 	for i, field := range m.Fields {
 		ret[i] = field.Name
@@ -154,7 +153,7 @@ func (m *Model) Names() []string {
 }
 
 // Returns the tagged names of all struct's fields
-func (m *Model) TagNames() []string {
+func (m Model) TagNames() []string {
 	ret := make([]string, len(m.Fields))
 	for i, field := range m.Fields {
 		ret[i] = field.TagName
@@ -167,7 +166,7 @@ func (m *Model) TagNames() []string {
 // Example:
 //	people.Repeat("?")
 //	["?", "?", "?"] // len is the number of mapped people struct's fields
-func (m *Model) Repeat(s string) []string {
+func (m Model) Repeat(s string) []string {
 	ret := make([]string, len(m.Fields))
 	for i, _ := range m.Fields {
 		ret[i] = s
@@ -180,7 +179,7 @@ func (m *Model) Repeat(s string) []string {
 // Example:
 //	people.Repeat("$")
 //	["$1", "$2", "$3"]
-func (m *Model) RepeatInc(s string) []string {
+func (m Model) RepeatInc(s string) []string {
 	ret := make([]string, len(m.Fields))
 	for i, _ := range m.Fields {
 		ret[i] = s + strconv.Itoa(i+1)
@@ -191,7 +190,7 @@ func (m *Model) RepeatInc(s string) []string {
 // Returns an array of assignment strings:
 // Example
 //	["name=?" "surname=?"]
-func (m *Model) Assing() []string {
+func (m Model) Assing() []string {
 	ret := make([]string, len(m.Fields))
 	for i, field := range m.Fields {
 		// I'm not sure for this use case this is more performant:
@@ -203,7 +202,7 @@ func (m *Model) Assing() []string {
 
 // Returns the underlining interface of each struct's field.
 // Useful when binding results to our struct.
-func (m *Model) Interfaces() []interface{} {
+func (m Model) Interfaces() []interface{} {
 	ret := make([]interface{}, len(m.Fields))
 	for i, field := range m.Fields {
 		ret[i] = field.Interface
