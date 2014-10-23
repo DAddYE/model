@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 )
 
 // Model is an utility type to access and manipulate struct informations.
@@ -12,37 +11,6 @@ type Model struct {
 	Fields []Field // field fields (pointers to fields)
 	ref    interface{}
 	tag    string
-}
-
-// Field represent the field of a struct, is an extension of `reflect.StructField` and adds
-// few convenient methods.
-type Field struct {
-	TagName   string
-	Interface interface{}
-	reflect.StructField
-}
-
-// Query is a tiny helper to help you to build query strings.
-// It will take care to join array of strings with ", " or convert `int`.
-type Query []interface{}
-
-func (q Query) String() string {
-	res := make([]string, len(q))
-	for i, v := range q {
-		switch x := v.(type) {
-		case string:
-			res[i] = x
-		case int:
-			res[i] = strconv.Itoa(x)
-		case []string:
-			res[i] = strings.Join(x, ", ")
-		case Query:
-			res[i] = x.String()
-		default:
-			panic(fmt.Errorf("the type %T is invalid", x))
-		}
-	}
-	return strings.Join(res, " ")
 }
 
 func structType(s interface{}) reflect.Value {
@@ -85,32 +53,6 @@ func New(s interface{}, tag string) Model {
 	}
 
 	return m
-}
-
-func fields(sv reflect.Value, tag string) ([]reflect.Value, []reflect.StructField) {
-	v := make([]reflect.Value, 0)
-	t := make([]reflect.StructField, 0)
-	st := sv.Type()
-
-	for i := 0; i < st.NumField(); i++ {
-		// walk inside an embedded struct if it has no tag.
-		if st.Field(i).Type.Kind() == reflect.Struct && st.Field(i).Tag.Get(tag) == "" {
-			vn, tn := fields(sv.Field(i), tag)
-			v = append(v, vn...)
-			t = append(t, tn...)
-			continue
-		}
-		if st.Field(i).Tag.Get(tag) != "" {
-			v = append(v, sv.Field(i))
-			t = append(t, st.Field(i))
-		}
-	}
-
-	if len(v) != len(t) {
-		panic("internal error")
-	}
-
-	return v, t
 }
 
 // Returns the real values of the tagged fields. This cannot be cached.
