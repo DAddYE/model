@@ -151,3 +151,14 @@ func (m Model) Interfaces() []interface{} {
 	}
 	return ret
 }
+
+// Returns a map of field (tag) names and their interface
+//	Example: m.Map()["last_name"]
+func (m Model) MapInterface() map[string]interface{} {
+	interfaces := m.Interfaces()
+	ret := make(map[string]interface{}, len(interfaces))
+	for i, value := range interfaces {
+		ret[m.TagNames()[i]] = value
+	}
+	return ret
+}
