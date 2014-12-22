@@ -103,7 +103,7 @@ func (m Model) TagNames() []string {
 	return ret
 }
 
-// Returns the given string as many times as the len of model.Fields
+// Repeat returns the given string as many times as the len of model.Fields
 // Useful when building insert statements with Query
 // Example:
 //	people.Repeat("?")
@@ -116,7 +116,7 @@ func (m Model) Repeat(s string) []string {
 	return ret
 }
 
-// Returns the given string as many times as the len of model.Fields plus his increment
+// RepeatInc returns the given string as many times as the len of model.Fields plus his increment
 // Useful when building insert statements (like in postgres) with Query struct.
 // Example:
 //	people.Repeat("$")
@@ -129,10 +129,10 @@ func (m Model) RepeatInc(s string) []string {
 	return ret
 }
 
-// Returns an array of assignment strings:
-// Example
+// Assign returns an array of assignment strings:
+// Example:
 //	["name=?" "surname=?"]
-func (m Model) Assing() []string {
+func (m Model) Assign() []string {
 	ret := make([]string, len(m.Fields))
 	for i, field := range m.Fields {
 		// I'm not sure for this use case this is more performant:
@@ -142,7 +142,7 @@ func (m Model) Assing() []string {
 	return ret
 }
 
-// Returns the underlining interface of each struct's field.
+// Interfaces returns the underlining interface of each struct's field.
 // Useful when binding results to our struct.
 func (m Model) Interfaces() []interface{} {
 	ret := make([]interface{}, len(m.Fields))
@@ -152,8 +152,9 @@ func (m Model) Interfaces() []interface{} {
 	return ret
 }
 
-// Returns a map of names (tags) and their interfaces
-//	Example: m.MapInterface()["last_name"]
+// MapInterface returns a map of names (tags) and their interfaces
+// Example:
+//	m.MapInterface()["last_name"]
 func (m Model) MapInterface() map[string]interface{} {
 	interfaces := m.Interfaces()
 	ret := make(map[string]interface{}, len(interfaces))
