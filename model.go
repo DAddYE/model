@@ -69,7 +69,7 @@ func Values(s interface{}, tag string) []interface{} {
 	return values
 }
 
-// Returns a map of field (tag) names and their value
+// Returns a map of names (tags) and their values
 //	Example: m.Map()["last_name"]
 func (m Model) Map() map[string]interface{} {
 	values := Values(m.ref, m.tag)
@@ -152,8 +152,8 @@ func (m Model) Interfaces() []interface{} {
 	return ret
 }
 
-// Returns a map of field (tag) names and their interface
-//	Example: m.Map()["last_name"]
+// Returns a map of names (tags) and their interfaces
+//	Example: m.MapInterface()["last_name"]
 func (m Model) MapInterface() map[string]interface{} {
 	interfaces := m.Interfaces()
 	ret := make(map[string]interface{}, len(interfaces))
