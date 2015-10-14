@@ -94,6 +94,10 @@ func (m Model) Names() []string {
 	return ret
 }
 
+func TagNames(s interface{}, tag string) []string {
+	return New(s, tag).TagNames()
+}
+
 // Returns the tagged names of all struct's fields
 func (m Model) TagNames() []string {
 	ret := make([]string, len(m.Fields))
@@ -140,6 +144,12 @@ func (m Model) Assign() []string {
 		ret[i] = field.TagName + "=?"
 	}
 	return ret
+}
+
+// Interfaces returns the underlining interface of each struct's field.
+// Useful when binding results to our struct.
+func Interfaces(s interface{}, tag string) []interface{} {
+	return New(s, tag).Interfaces()
 }
 
 // Interfaces returns the underlining interface of each struct's field.
