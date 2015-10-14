@@ -16,6 +16,10 @@ func fields(sv reflect.Value, tag string) ([]reflect.Value, []reflect.StructFiel
 	st := sv.Type()
 
 	for i := 0; i < st.NumField(); i++ {
+		if st.Field(i).Tag.Get(tag) == "-" {
+			continue
+		}
+
 		// walk inside an embedded struct if it has no tag.
 		if st.Field(i).Type.Kind() == reflect.Struct && st.Field(i).Tag.Get(tag) == "" {
 			vn, tn := fields(sv.Field(i), tag)
@@ -23,6 +27,7 @@ func fields(sv reflect.Value, tag string) ([]reflect.Value, []reflect.StructFiel
 			t = append(t, tn...)
 			continue
 		}
+
 		if st.Field(i).Tag.Get(tag) != "" {
 			v = append(v, sv.Field(i))
 			t = append(t, st.Field(i))

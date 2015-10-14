@@ -14,6 +14,7 @@ func TestModel(t *testing.T) {
 		Bio struct {
 			Name    string `custom:"name"`
 			Surname string `custom:"surname"`
+			Skipped bool   `custom:"-"`
 		}
 		Login   string
 		private bool
